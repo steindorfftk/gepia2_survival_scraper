@@ -23,8 +23,8 @@ datasets = []
 for value in quartile:
 	datasets.append(value)
 	
-for value in tercile:
-	datasets.append(value)
+#for value in tercile:
+#	datasets.append(value)
 
 #for value in median:
 #	datasets.append(value)
@@ -119,7 +119,9 @@ for value in datasets:
 					driver.switch_to.alert.dismiss()
 				except NoAlertPresentException:
 					texto.write(gene + ' , NA , NA , NA \n')
-					pass			
+					pass
+			except TimeoutException:
+				texto.write(f'{gene} , Timeout , Timeout , Timeout \n')			
 			finally:
 			    driver.quit()
 			end_time = time.time()

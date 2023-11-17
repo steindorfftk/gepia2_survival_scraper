@@ -84,7 +84,7 @@ for value in datasets:
 			    driver.execute_script("arguments[0].click();", button)
 
 			    # Wait for the page to load
-			    sleep(10)
+			    sleep(20)
 			    iframe_element = driver.find_element(By.ID, "iframe")
 			    driver.switch_to.frame(iframe_element)
 			    span_element_a = driver.find_element(By.XPATH, "//span[contains(text(),'Logrank')]")

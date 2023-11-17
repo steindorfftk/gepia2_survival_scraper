@@ -8,14 +8,25 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import NoAlertPresentException
 from urllib.parse import urlparse, urljoin
 
 # Input file
-datasets = ['ACC','BLCA','BRCA','CESC','CHOL','COAD','DLBC','ESCA','GBM','HNSC','KICH','KIRC','KIRP','LAML','LGG','LIHC','LUAD','LUSC','MESO','OV','PAAD','PCPG','PRAD','READ','SARC','SKCM','STAD','TGCT','THCA','THYM','UCEC','UCS','UVM']
 quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
 
 tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
 median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
+datasets = []
+for value in quartile:
+	datasets.append(value)
+	
+for value in tercile:
+	datasets.append(value)
+
+#for value in median:
+#	datasets.append(value)
+
 genes = []
 
 
@@ -38,7 +49,7 @@ for value in datasets:
 		low_cutoff = '50'
 	csv_name = value + '.csv'
 	with open(csv_name,'w') as texto:
-		texto.write('Gene , PValue , HR \n')
+		texto.write('Gene , PValue , HR , Worse prognosis \n')
 	with open(csv_name,'a') as texto:
 		for gene in genes:
 			# Initialize WebDriver
@@ -76,9 +87,26 @@ for value in datasets:
 			    texto.write(span_text_a[10:] + ' , ')
 			    span_element_b = driver.find_element(By.XPATH, "//span[contains(text(),'HR')]")
 			    span_text_b = span_element_b.text
-			    texto.write(span_text_b[9:] + ' \n')
+			    texto.write(span_text_b[9:] + ' , ')
 			    driver.switch_to.default_content()
+			    if float(span_text_a[10:]) <= 0.05:
+			    	if float(span_text_b[9:]) >= 1:
+			    		texto.write('High \n')
+			    	else:
+			    		texto.write('Low \n')
+			    else:
+			    	texto.write('NA \n') 
 			    
+			except UnexpectedAlertPresentException as e:
+				try:
+					print(f"Caught an unexpected alert: {e}")
+					driver.switch_to.alert.dismiss()
+				except NoAlertPresentException:
+					texto.write(gene + ' , NA , NA , NA \n')
+					pass			
 			finally:
 			    driver.quit()
+
+
+
 

@@ -7,10 +7,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.common.exceptions import NoAlertPresentException
 from urllib.parse import urlparse, urljoin
+import time
 
 # Input file
 quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
@@ -29,13 +31,17 @@ for value in tercile:
 
 genes = []
 
-
+start_time = time.time()
+i = 0
 	
 with open('genes.txt', 'r') as texto:
 	for line in texto:
 		linha = line.split()
 		if len(linha) > 0:
 			genes.append(linha[0])
+
+firefox_options = Options()
+firefox_options.add_argument('--headless')
 
 for value in datasets:
 	if value in quartile:
@@ -53,7 +59,7 @@ for value in datasets:
 	with open(csv_name,'a') as texto:
 		for gene in genes:
 			# Initialize WebDriver
-			driver = webdriver.Firefox()
+			driver = webdriver.Firefox(options=firefox_options)
 			try:
 			    # Open the website
 			    driver.get('http://gepia2.cancer-pku.cn/#survival')
@@ -78,7 +84,7 @@ for value in datasets:
 			    driver.execute_script("arguments[0].click();", button)
 
 			    # Wait for the page to load
-			    sleep(20)
+			    sleep(10)
 			    iframe_element = driver.find_element(By.ID, "iframe")
 			    driver.switch_to.frame(iframe_element)
 			    span_element_a = driver.find_element(By.XPATH, "//span[contains(text(),'Logrank')]")
@@ -87,15 +93,25 @@ for value in datasets:
 			    texto.write(span_text_a[10:] + ' , ')
 			    span_element_b = driver.find_element(By.XPATH, "//span[contains(text(),'HR')]")
 			    span_text_b = span_element_b.text
+			    
 			    texto.write(span_text_b[9:] + ' , ')
 			    driver.switch_to.default_content()
-			    if float(span_text_a[10:]) <= 0.05:
-			    	if float(span_text_b[9:]) >= 1:
-			    		texto.write('High \n')
-			    	else:
+			    if 'e' in span_text_a[10:]:
+			    	if 'e' in span_text_b[9:]:
 			    		texto.write('Low \n')
+			    	else:
+				    	if float(span_text_b[9:]) >= 1:
+				    		texto.write('High \n')
+				    	else:
+				    		texto.write('Low \n')
 			    else:
-			    	texto.write('NA \n') 
+				    if float(span_text_a[10:]) <= 0.05:
+				    	if float(span_text_b[9:]) >= 1:
+				    		texto.write('High \n')
+				    	else:
+				    		texto.write('Low \n')
+				    else:
+				    	texto.write('NA \n') 
 			    
 			except UnexpectedAlertPresentException as e:
 				try:
@@ -106,6 +122,12 @@ for value in datasets:
 					pass			
 			finally:
 			    driver.quit()
+			end_time = time.time()
+			i += 1
+			elapsed_time = end_time - start_time
+			mean_time = round(elapsed_time/i, 2)
+			print(f'Done ({gene} for {value}) [{mean_time} seconds/gene]')    
+			
 
 
 

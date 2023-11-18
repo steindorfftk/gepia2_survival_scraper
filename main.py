@@ -11,20 +11,22 @@ from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import NoSuchElementException
 from urllib.parse import urlparse, urljoin
 import time
 
 # Input file
-quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
-
-tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
+#quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
+#tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
+quartile = ['THCA']
+tercile = ['GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
 median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
 datasets = []
-for value in quartile:
-	datasets.append(value)
-	
-#for value in tercile:
+#for value in quartile:
 #	datasets.append(value)
+	
+for value in tercile:
+	datasets.append(value)
 
 #for value in median:
 #	datasets.append(value)
@@ -58,6 +60,7 @@ for value in datasets:
 		texto.write('Gene , PValue , HR , Worse prognosis \n')
 	with open(csv_name,'a') as texto:
 		for gene in genes:
+			error = False
 			# Initialize WebDriver
 			driver = webdriver.Firefox(options=firefox_options)
 			try:
@@ -84,7 +87,7 @@ for value in datasets:
 			    driver.execute_script("arguments[0].click();", button)
 
 			    # Wait for the page to load
-			    sleep(20)
+			    sleep(30)
 			    iframe_element = driver.find_element(By.ID, "iframe")
 			    driver.switch_to.frame(iframe_element)
 			    span_element_a = driver.find_element(By.XPATH, "//span[contains(text(),'Logrank')]")
@@ -113,22 +116,31 @@ for value in datasets:
 				    else:
 				    	texto.write('NA \n') 
 			    
-			except UnexpectedAlertPresentException as e:
+			except UnexpectedAlertPresentException:
 				try:
-					print(f"Caught an unexpected alert: {e}")
 					driver.switch_to.alert.dismiss()
 				except NoAlertPresentException:
 					texto.write(gene + ' , NA , NA , NA \n')
 					pass
+				print('{gene} not available for {value}')
+				error = True
 			except TimeoutException:
 				texto.write(f'{gene} , Timeout , Timeout , Timeout \n')			
+				print('Time out {gene} for {value}')
+				error = True
+				pass
+			except NoSuchElementException:
+				texto.write(f'{gene} , Error , Error , Error\n')
+				print('Time out {gene} for {value}')
+				error = True
 			finally:
 			    driver.quit()
 			end_time = time.time()
 			i += 1
 			elapsed_time = end_time - start_time
 			mean_time = round(elapsed_time/i, 2)
-			print(f'Done ({gene} for {value}) [{mean_time} seconds/gene]')    
+			if error == False:
+				print(f'Done ({gene} for {value}) [{mean_time} seconds/gene]')    
 			
 
 

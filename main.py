@@ -122,16 +122,16 @@ for value in datasets:
 				except NoAlertPresentException:
 					texto.write(gene + ' , NA , NA , NA \n')
 					pass
-				print('{gene} not available for {value}')
+				print(f'{gene} not available for {value}')
 				error = True
 			except TimeoutException:
 				texto.write(f'{gene} , Timeout , Timeout , Timeout \n')			
-				print('Time out {gene} for {value}')
+				print(f'Time out {gene} for {value}')
 				error = True
 				pass
 			except NoSuchElementException:
 				texto.write(f'{gene} , Error , Error , Error\n')
-				print('Time out {gene} for {value}')
+				print(f'Time out {gene} for {value}')
 				error = True
 			finally:
 			    driver.quit()

@@ -16,17 +16,15 @@ from urllib.parse import urlparse, urljoin
 import time
 
 # Input file
-#quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
-#tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
-quartile = ['THCA']
-tercile = ['GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
+quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
+tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
 median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
-datasets = []
+datasets = ['STAD']
 #for value in quartile:
 #	datasets.append(value)
 	
-for value in tercile:
-	datasets.append(value)
+#for value in tercile:
+#	datasets.append(value)
 
 #for value in median:
 #	datasets.append(value)
@@ -43,7 +41,7 @@ with open('genes.txt', 'r') as texto:
 			genes.append(linha[0])
 
 firefox_options = Options()
-firefox_options.add_argument('--headless')
+#firefox_options.add_argument('--headless')
 
 for value in datasets:
 	if value in quartile:
@@ -109,10 +107,13 @@ for value in datasets:
 				    		texto.write('Low \n')
 			    else:
 				    if float(span_text_a[10:]) <= 0.05:
-				    	if float(span_text_b[9:]) >= 1:
-				    		texto.write('High \n')
-				    	else:
-				    		texto.write('Low \n')
+				        if 'e' in span_text_b[9:]:
+				        	texto.write('Low \n')
+				        else:
+				        	if float(span_text_b[9:]) >= 1:
+				        		texto.write('High \n')
+				        	else:
+				        		texto.write('Low \n')
 				    else:
 				    	texto.write('NA \n') 
 			    

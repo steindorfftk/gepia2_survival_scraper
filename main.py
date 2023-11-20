@@ -19,15 +19,15 @@ import time
 quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
 tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
 median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
-datasets = ['STAD']
-#for value in quartile:
-#	datasets.append(value)
+datasets = []
+for value in quartile:
+	datasets.append(value)
 	
-#for value in tercile:
-#	datasets.append(value)
+for value in tercile:
+	datasets.append(value)
 
-#for value in median:
-#	datasets.append(value)
+for value in median:
+	datasets.append(value)
 
 genes = []
 

@@ -20,14 +20,15 @@ quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','
 tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
 median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
 datasets = []
+
 for value in quartile:
 	datasets.append(value)
 	
-for value in tercile:
-	datasets.append(value)
+#for value in tercile:
+#	datasets.append(value)
 
-for value in median:
-	datasets.append(value)
+#for value in median:
+#	datasets.append(value)
 
 genes = []
 
@@ -41,12 +42,12 @@ with open('genes.txt', 'r') as texto:
 			genes.append(linha[0])
 
 firefox_options = Options()
-#firefox_options.add_argument('--headless')
+firefox_options.add_argument('--headless')
 
 for value in datasets:
 	if value in quartile:
-		high_cutoff = '75'
-		low_cutoff = '25'
+		high_cutoff = '67'
+		low_cutoff = '33'
 	elif value in tercile:
 		high_cutoff = '67'
 		low_cutoff = '33'
@@ -56,15 +57,15 @@ for value in datasets:
 	csv_name = value + '.csv'
 	with open(csv_name,'w') as texto:
 		texto.write('Gene , PValue , HR , Worse prognosis \n')
+	driver = webdriver.Firefox(options=firefox_options)
+	driver.get('http://gepia2.cancer-pku.cn/#survival')
 	with open(csv_name,'a') as texto:
 		for gene in genes:
 			error = False
 			# Initialize WebDriver
-			driver = webdriver.Firefox(options=firefox_options)
 			try:
 			    # Open the website
-			    driver.get('http://gepia2.cancer-pku.cn/#survival')
-
+			    
 			    # Wait for the button to be present
 			    button = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, "//button[@id='survival_plot']")))
 
@@ -79,13 +80,13 @@ for value in datasets:
 			    driver.execute_script(script_c)
 			    script_d = f"document.getElementById('survival_groupcutoff2').value='{low_cutoff}';"
 			    driver.execute_script(script_d)
-			    sleep(10)
+			    sleep(2)
 
 			    # Click on the button
 			    driver.execute_script("arguments[0].click();", button)
 
 			    # Wait for the page to load
-			    sleep(30)
+			    sleep(10)
 			    iframe_element = driver.find_element(By.ID, "iframe")
 			    driver.switch_to.frame(iframe_element)
 			    span_element_a = driver.find_element(By.XPATH, "//span[contains(text(),'Logrank')]")
@@ -135,7 +136,7 @@ for value in datasets:
 				print(f'Time out {gene} for {value}')
 				error = True
 			finally:
-			    driver.quit()
+			    pass
 			end_time = time.time()
 			i += 1
 			elapsed_time = end_time - start_time

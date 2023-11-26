@@ -76,13 +76,11 @@ def main():
 							done_genes.append(linha[0])
 			remaining_genes = [value for value in genes if value not in done_genes]
 		sleep(10)
-		print(len(remaining_genes))
+		print(f'Scrapping {len(remaining_genes)} genes for {value}')
 		with open(csv_name,'a') as texto:
 			retry_count = 0
 			retry = False
 			for gene in remaining_genes:
-				print(f'Retry count: {retry_count}')
-				print(f'Retry: {retry}')
 				error = False
 				if retry == True:
 					print('Restarting...')
@@ -110,7 +108,7 @@ def main():
 				    driver.execute_script("arguments[0].click();", button)
 
 				    # Wait for the page to load
-				    sleep(2)
+				    sleep(12)
 				    iframe_element = driver.find_element(By.ID, "iframe")
 				    driver.switch_to.frame(iframe_element)
 				    span_element_a = driver.find_element(By.XPATH, "//span[contains(text(),'Logrank')]")

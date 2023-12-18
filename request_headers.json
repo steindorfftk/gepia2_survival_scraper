@@ -1,0 +1,12 @@
+{
+  "Accept": "application/json, text/javascript, */*; q=0.01",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Cache-Control": "no-cache",
+  "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+  "Origin": "http://gepia2.cancer-pku.cn",
+  "Pragma": "no-cache",
+  "Proxy-Connection": "keep-alive",
+  "Referer": "http://gepia2.cancer-pku.cn/",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+  "X-Requested-With": "XMLHttpRequest"
+}

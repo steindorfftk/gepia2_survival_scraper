@@ -74,7 +74,7 @@ def read_pdf(pdf_bytes: bytes) -> dict[str, float | str]:
         lambda x: float(eval(str(
             x.split('=')[-1].replace('e', '*10e').replace('−', '-')
         ))), info
-    ))
+    ))[:2]
 
     prognosis = 'NA'
     if (pval < .05):

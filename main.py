@@ -115,7 +115,7 @@ def get_cookies():
 
 
 def query_gene(
-    cookies, headers: list[str],
+    OUTPUT_DIR, cookies, headers: list[str],
     dataset_name: str, gene_name: str
 ):
     gene_name = gene_name
@@ -168,11 +168,11 @@ def query_gene(
         f'{dataset_name} output file')
 
 
-def args_iter(cookies, headers: list[str], datasets: str, genes: str):
+def args_iter(cookies, headers: list[str], datasets: str, genes: str, OUTPUT_DIR):
     for dataset_name in datasets:
         for gene_name in genes:
             yield (
-                cookies, headers,
+                OUTPUT_DIR, cookies, headers,
                 dataset_name,
                 gene_name
             )
@@ -208,11 +208,12 @@ def main():
         if not pathlib.Path(output_filename).exists():
             with open(output_filename, 'a') as fp:
                 fp.writelines([','.join(csv_header)+'\n'])
+                fp.flush()
 
     try:
         with Pool() as p:
             p.starmap(
-                query_gene, args_iter(cookies, headers, datasets, genes))
+                query_gene, args_iter(cookies, headers, datasets, genes, OUTPUT_DIR))
             logger.debug("Finished creating tasks")
     except KeyboardInterrupt:
         exit(-1)

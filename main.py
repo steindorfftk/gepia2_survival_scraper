@@ -27,6 +27,16 @@ logger.addHandler(handler)
 OUTPUT_DIR: str
 
 
+def read_processed_genes(filepath: str) -> set[str]:
+    genes = set()
+    with open(filepath) as fp:
+        fp.readline()
+        for line in fp.readlines():
+            gene = line.strip().split(',')[0]
+            genes.add(gene)
+    return genes
+
+
 def read_txt_lines(filepath: str) -> list[str]:
     data = []
     with open(filepath) as text:
@@ -59,17 +69,14 @@ def payload_from_gene_data(
 
 
 def read_pdf(pdf_bytes: bytes) -> dict[str, float | str]:
-    """Assumes content is valid"""
+    pdf_bytes_str = str(pdf_bytes)
+    if pdf_bytes_str.startswith('b\'<!DOCTYPE HTML'):
+        return {h: 'NA' for h in ('PValue', 'HR', 'Worse Prognosis')}
+
     page = PyPDF2.PdfReader(io.BytesIO(pdf_bytes)).pages[0]
     page_content = page.extract_text()
+
     info = page_content[page_content.find('Logrank'):].split('\n')[:5]
-
-    # print(f'{page_content[:10] = }')
-
-    # with open(f'{dataset_name}+{pdf}.pdf', 'wb') as fp:
-    #     fp.write(pdf_bytes)
-    # breakpoint()
-
     pval, hr = tuple(map(
         lambda x: float(eval(str(
             x.split('=')[-1].replace('e', '*10e').replace('−', '-')
@@ -83,12 +90,11 @@ def read_pdf(pdf_bytes: bytes) -> dict[str, float | str]:
         else:
             prognosis = 'Low'
 
-    info_dict = {
+    return {
         'PValue': pval,
         'HR': hr,
         'Worse prognosis': prognosis
     }
-    return info_dict
 
 
 def get_cookies():
@@ -108,14 +114,16 @@ def get_cookies():
     cookies = requests.cookies.RequestsCookieJar()
 
     for cookie in driver.get_cookies():
-        cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'], path=cookie['path'])
+        cookies.set(
+            cookie['name'], cookie['value'],
+            domain=cookie['domain'], path=cookie['path'])
     driver.close()
 
     return cookies
 
 
 def query_gene(
-    OUTPUT_DIR, cookies, headers: list[str],
+    OUTPUT_DIR, cookies, request_headers: list[str],
     dataset_name: str, gene_name: str
 ):
     gene_name = gene_name
@@ -132,7 +140,7 @@ def query_gene(
         data=data,
         verify=False,
         cookies=cookies,
-        headers=headers)
+        headers=request_headers)
 
     # baixa PDF
     # time.sleep(.1)  # to avoid timeouts
@@ -140,19 +148,15 @@ def query_gene(
     response = requests.get(
         f'http://gepia2.cancer-pku.cn/tmp/{response_dict["outdir"]}',
         cookies=cookies,
-        headers=headers)
-
-    pdf_bytes = response.content
-    pdf_bytes_str = str(pdf_bytes)
-    if pdf_bytes_str.startswith('b\'<!DOCTYPE HTML'):
-        logger.error(f'Could not find {gene_name} on {dataset_name}')
-        return
+        headers=request_headers)
 
     try:
-        pdf_data = read_pdf(pdf_bytes)
+        pdf_data = read_pdf(response.content)
     except Exception as e:
-        print(f'{pdf_bytes_str = }')
-        raise e
+        logging.error(
+            f'Caught exception {e} '+
+            f'when running {gene_name} on {dataset_name}. '
+            'Ignoring case...')
     info_dict = {'Gene': gene_name} | pdf_data
 
     logger.debug(f'Finished querying {info_dict["Gene"]} on {dataset_name}')
@@ -168,9 +172,18 @@ def query_gene(
         f'{dataset_name} output file')
 
 
-def args_iter(cookies, headers: list[str], datasets: str, genes: str, OUTPUT_DIR):
+def args_iter(
+    cookies, headers: list[str],
+    datasets: list[str], genes: list[str],
+    read_genes: list[str],
+    OUTPUT_DIR: str
+):
     for dataset_name in datasets:
-        for gene_name in genes:
+        if dataset_name in read_genes:
+            genes_it = filter(lambda x: x not in read_genes, genes)
+        else:
+            genes_it = iter(genes)
+        for gene_name in genes_it:
             yield (
                 OUTPUT_DIR, cookies, headers,
                 dataset_name,
@@ -202,6 +215,7 @@ def main():
 
     # creates output files
     csv_header = ['Gene', 'PValue', 'HR', 'Worse prognosis']
+    read_genes: dict[str, set[str]] = {}
     for dataset_name in datasets:
         output_filename = str(OUTPUT_DIR / f'{dataset_name}.csv')
 
@@ -209,11 +223,17 @@ def main():
             with open(output_filename, 'a') as fp:
                 fp.writelines([','.join(csv_header)+'\n'])
                 fp.flush()
+        else:
+            read_genes[dataset_name] = read_processed_genes(output_filename)
 
     try:
-        with Pool() as p:
+        with Pool() as p:  # TODO: wait for tasks after loop
             p.starmap(
-                query_gene, args_iter(cookies, headers, datasets, genes, OUTPUT_DIR))
+                query_gene,
+                args_iter(
+                    cookies, headers,
+                    datasets, genes, read_genes, OUTPUT_DIR)
+            )
             logger.debug("Finished creating tasks")
     except KeyboardInterrupt:
         exit(-1)

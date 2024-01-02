@@ -183,6 +183,17 @@ class Scraper:
                 (str(info_dict[k]) for k in csv_header)
             )+'\n'])
 
+    def query_gene_safe(self, dataset_name, gene_name):
+        # TODO: maybe could be decorated
+        try:
+            self.query_gene(dataset_name, gene_name)
+        except BaseException as e:
+            args = (dataset_name, gene_name)
+            msg = f'Caught {type(e)}'
+            msg += f' with args {args = }.'
+            msg += f'\nFull message: {str(e)}'
+            print(msg)
+
     def _map_args_iter_(self):
         for dataset_name in self.datasets:
             genes_it = iter(self.genes)

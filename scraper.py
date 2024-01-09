@@ -1,7 +1,7 @@
 import io
 import json
-from multiprocessing import Pool
 import pathlib
+import traceback
 
 import requests  # pip install requests
 import tqdm  # pip install tqdm
@@ -193,27 +193,20 @@ class Scraper:
                 (str(info_dict[k]) for k in csv_header)
             )+'\n'])
 
-    def query_gene_safe(self, dataset_name, gene_name):
+    def query_gene_safe(self, dataset_name: str, gene_name: str) -> bool:
         # TODO: maybe could be decorated
         try:
             self.query_gene(dataset_name, gene_name)
         except BaseException as e:
+            ex = f'{type(e)}: {e}'
             args = (dataset_name, gene_name)
-            msg = f'Caught {type(e)}'
-            msg += f' with args {args = }.'
-            msg += f'\nFull message: {str(e)}'
-            print(msg)
+            tb = traceback.format_exc()
 
-    def _map_args_iter_(self):
-        for dataset_name in self.datasets:
-            genes_it = iter(self.genes)
-            if dataset_name in self.read_genes:
-                genes_it = filter(
-                    lambda x: x not in self.read_genes[dataset_name],
-                    genes_it)
-
-            for gene_name in genes_it:
-                yield (
-                    dataset_name,
-                    gene_name
-                )
+            msg = '\n'.join((
+                f'Args {args} => {ex}.',
+                f'{tb}'
+            ))
+            print(msg)  # TODO: logging.error
+            return False
+        else:
+            return True

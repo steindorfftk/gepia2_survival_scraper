@@ -84,19 +84,29 @@ def payload_from_gene_data(
 
 
 def read_pdf(pdf_bytes: bytes) -> dict[str, float | str]:
+    return_keys = ('PValue', 'HR', 'Worse Prognosis')
+    empty_return = {h: 'NA' for h in return_keys}
+
     pdf_bytes_str = str(pdf_bytes)
     if pdf_bytes_str.startswith('b\'<!DOCTYPE HTML'):
-        return {h: 'NA' for h in ('PValue', 'HR', 'Worse Prognosis')}
+        return empty_return
 
     page = PyPDF2.PdfReader(io.BytesIO(pdf_bytes)).pages[0]
     page_content = page.extract_text()
+    info = tuple(
+        page_content[page_content.find('Logrank'):].split('\n')[:2])
 
-    info = page_content[page_content.find('Logrank'):].split('\n')[:5]
+    eval_str: tuple[str] = tuple(map(
+        lambda x: x.split('=')[-1].replace(
+            'e', '*10e').replace('−', '-'),
+        info
+    ))
+    if any(map(lambda x: x == 'NaN', eval_str)):
+        return empty_return
+
     pval, hr = tuple(map(
-        lambda x: float(eval(str(
-            x.split('=')[-1].replace('e', '*10e').replace('−', '-')
-        ))), info
-    ))[:2]
+        lambda s: float(eval(s)), eval_str
+    ))
 
     prognosis = 'NA'
     if (pval < .05):

@@ -15,24 +15,14 @@ from selenium.common.exceptions import NoSuchElementException
 from urllib.parse import urlparse, urljoin
 import time
 
-# Input file
-quartile = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
-quartile = ['KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA']
-tercile = ['CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC']
-median = ['ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
-datasets = []
+#Cut-offs (Quartile: High = 75 and Low = 25 | Tercile: High = 67 and Low = 33 | Median: High = 50 and Low = 50)
+high_cutoff = '75'
+low_cutoff = '25'
 
-for value in quartile:
-	datasets.append(value)
-	
-#for value in tercile:
-#	datasets.append(value)
 
-#for value in median:
-#	datasets.append(value)
 
+datasets = ['BLCA','BRCA','HNSC','KIRC','LGG','LIHC','LUAD','LUSC','OV','PRAD','SKCM','STAD','THCA','CESC','COAD','ESCA','GBM','KIRP','LAML','PAAD','PCPG','READ','SARC','TGCT','THYM','UCEC','ACC','CHOL','DLBC','KICH','MESO','UCS','UVM']
 genes = []
-
 	
 with open('genes.txt', 'r') as texto:
 	for line in texto:
@@ -48,17 +38,7 @@ def main():
 	firefox_options.add_argument('--headless')
 	driver = webdriver.Firefox(options=firefox_options)
 	driver.get('http://gepia2.cancer-pku.cn/#survival')
-
 	for value in datasets:
-		if value in quartile:
-			high_cutoff = '67'
-			low_cutoff = '33'
-		elif value in tercile:
-			high_cutoff = '67'
-			low_cutoff = '33'
-		elif value in median:
-			high_cutoff = '50'
-			low_cutoff = '50'
 		csv_name = value + '.csv'
 		if csv_name not in os.listdir():
 			with open(csv_name,'w') as texto:
